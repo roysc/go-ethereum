@@ -349,12 +349,11 @@ func (typedData *TypedData) TypeHash(primaryType string) hexutil.Bytes {
 //
 // each encoded member is 32-byte long
 func (typedData *TypedData) EncodeData(primaryType string, data map[string]interface{}, depth int) (hexutil.Bytes, error) {
-	debug := fmt.Sprint("DEBUG EncodeData ", primaryType, data, depth)
+	debug := fmt.Sprintf("DEBUG EncodeData (%v %v %v)\nDATA: %+v\n", primaryType, data, depth, typedData)
 	// use runtime package to get call stack as well TODO
 	res, err := typedData._EncodeData(primaryType, data, depth)
-	callstack := getCallStack(-1)
 	if err != nil {
-		err = fmt.Errorf("%s: %w; %s", debug, err, callstack)
+		err = fmt.Errorf("%s %w", debug, err)
 	}
 	return res, err
 }
@@ -575,7 +574,8 @@ func (typedData *TypedData) EncodePrimitiveValue(encType string, encValue interf
 // dataMismatchError generates an error for a mismatch between
 // the provided type and data
 func dataMismatchError(encType string, encValue interface{}) error {
-	return fmt.Errorf("provided data '%v' doesn't match type '%s'", encValue, encType)
+	callstack := getCallStack(-1)
+	return fmt.Errorf("provided data '%v' doesn't match type '%s'\nBacktrace: %s", encValue, encType, callstack)
 }
 
 // validate makes sure the types are sound
