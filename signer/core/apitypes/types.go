@@ -348,10 +348,19 @@ func (typedData *TypedData) TypeHash(primaryType string) hexutil.Bytes {
 //
 // each encoded member is 32-byte long
 func (typedData *TypedData) EncodeData(primaryType string, data map[string]interface{}, depth int) (hexutil.Bytes, error) {
+	debug := fmt.Sprint("DEBUG EncodeData", primaryType, data, depth)
+	// use runtime package to get call stack as well TODO
+	res, err := typedData._EncodeData(primaryType, data, depth)
+	if err != nil {
+		err = fmt.Errorf("%s: %w", debug, err)
+	}
+	return res, err
+}
+
+func (typedData *TypedData) _EncodeData(primaryType string, data map[string]interface{}, depth int) (hexutil.Bytes, error) {
 	if err := typedData.validate(); err != nil {
 		return nil, err
 	}
-	fmt.Println("DEBUG EncodeData", primaryType, data, depth)
 
 	buffer := bytes.Buffer{}
 
