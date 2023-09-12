@@ -404,7 +404,7 @@ func (typedData *TypedData) _EncodeData(primaryType string, data map[string]inte
 					if !ok {
 						return nil, dataMismatchError(parsedType, item)
 					}
-					encodedData, err := typedData.EncodeData(parsedType, mapValue, depth+1)
+					encodedData, err := typedData._EncodeData(parsedType, mapValue, depth+1)
 					if err != nil {
 						return nil, err
 					}
@@ -424,7 +424,7 @@ func (typedData *TypedData) _EncodeData(primaryType string, data map[string]inte
 			if !ok {
 				return nil, dataMismatchError(encType, encValue)
 			}
-			encodedData, err := typedData.EncodeData(field.Type, mapValue, depth+1)
+			encodedData, err := typedData._EncodeData(field.Type, mapValue, depth+1)
 			if err != nil {
 				return nil, err
 			}
