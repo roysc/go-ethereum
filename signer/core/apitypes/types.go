@@ -24,6 +24,7 @@ import (
 	"math/big"
 	"reflect"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -348,13 +349,27 @@ func (typedData *TypedData) TypeHash(primaryType string) hexutil.Bytes {
 //
 // each encoded member is 32-byte long
 func (typedData *TypedData) EncodeData(primaryType string, data map[string]interface{}, depth int) (hexutil.Bytes, error) {
-	debug := fmt.Sprint("DEBUG EncodeData", primaryType, data, depth)
+	debug := fmt.Sprint("DEBUG EncodeData ", primaryType, data, depth)
 	// use runtime package to get call stack as well TODO
 	res, err := typedData._EncodeData(primaryType, data, depth)
+	callstack := getCallStack(-1)
 	if err != nil {
-		err = fmt.Errorf("%s: %w", debug, err)
+		err = fmt.Errorf("%s: %w; %s", debug, err, callstack)
 	}
 	return res, err
+}
+
+func getCallStack(depth int) string {
+	var buffer bytes.Buffer
+	buffer.WriteString("DEBUG call stack:\n")
+	for i := 1; i != depth; i++ {
+		pc, file, line, ok := runtime.Caller(i)
+		if !ok {
+			break
+		}
+		buffer.WriteString(fmt.Sprintf("  %d: %s:%d %s\n", i, file, line, runtime.FuncForPC(pc).Name()))
+	}
+	return buffer.String()
 }
 
 func (typedData *TypedData) _EncodeData(primaryType string, data map[string]interface{}, depth int) (hexutil.Bytes, error) {
