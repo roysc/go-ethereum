@@ -349,18 +349,26 @@ func (typedData *TypedData) TypeHash(primaryType string) hexutil.Bytes {
 //
 // each encoded member is 32-byte long
 func (typedData *TypedData) EncodeData(primaryType string, data map[string]interface{}, depth int) (hexutil.Bytes, error) {
-	debug := fmt.Sprintf("DEBUG EncodeData (%v %v %v)\nDATA: %+v\n", primaryType, data, depth, typedData)
+	debug := fmt.Sprintf("\nDEBUG\nTypeData: %+v\nEncodeData (%v %v %v)\n",
+		typedData, primaryType, data, depth)
 	// use runtime package to get call stack as well TODO
 	res, err := typedData._EncodeData(primaryType, data, depth)
 	if err != nil {
-		err = fmt.Errorf("%s %w", debug, err)
+		if _, ok := err.(encodeError); !ok { // prevent nesting
+			err = encodeError(fmt.Errorf("%s %w", debug, err).Error())
+		}
 	}
 	return res, err
 }
 
+type encodeError string
+
+func (e encodeError) Error() string {
+	return string(e)
+}
+
 func getCallStack(depth int) string {
 	var buffer bytes.Buffer
-	buffer.WriteString("DEBUG call stack:\n")
 	for i := 1; i != depth; i++ {
 		pc, file, line, ok := runtime.Caller(i)
 		if !ok {
@@ -404,7 +412,7 @@ func (typedData *TypedData) _EncodeData(primaryType string, data map[string]inte
 					if !ok {
 						return nil, dataMismatchError(parsedType, item)
 					}
-					encodedData, err := typedData._EncodeData(parsedType, mapValue, depth+1)
+					encodedData, err := typedData.EncodeData(parsedType, mapValue, depth+1)
 					if err != nil {
 						return nil, err
 					}
@@ -424,7 +432,7 @@ func (typedData *TypedData) _EncodeData(primaryType string, data map[string]inte
 			if !ok {
 				return nil, dataMismatchError(encType, encValue)
 			}
-			encodedData, err := typedData._EncodeData(field.Type, mapValue, depth+1)
+			encodedData, err := typedData.EncodeData(field.Type, mapValue, depth+1)
 			if err != nil {
 				return nil, err
 			}
